@@ -36,11 +36,12 @@ int main(int argc, char *argv[]) {
   // Set up the OpenGL modelview matrix
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslated(0, 0, -3);
-  glRotated(45, 1, 1, 0);
+  glTranslated(-10, 0, -30);
+  
 
-  // Enable lighting
-
+  GLfloat cameraMatrix[16];
+  glGetFloatv(GL_MODELVIEW_MATRIX, cameraMatrix);
+  Scene::printGLMatrix(cameraMatrix);
 
   // Set up the light position and color
   GLfloat lightPos[] = {0.0, 0.0, 1.5, 0.0};
@@ -55,15 +56,44 @@ int main(int argc, char *argv[]) {
 
   RobotModel model;
   Scene scene;
-  // Draw the cube
-  while (1) {
+  GLfloat rotAngleDeg = 0;
+  GLfloat translate = 0;
 
+  for (size_t i = 0; i < 6; i++) {
+      model.links[i].printTransform();
+  }
+
+  while (1) {
+    
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    scene.drawLink(model.links[0]);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(cameraMatrix);
+    glTranslatef(0,  translate, 0);
+    glRotatef(rotAngleDeg, 0, 1, 0);
+    glDisable(GL_LIGHTING);
+    scene.drawAxes();
+    glEnable(GL_LIGHTING);
+    
 
+    GLfloat linkColors[] = {
+       1.0, 0.0, 0.0,
+       0.0, 1.0, 0.0,
+       0.0, 0.0, 1.0,
+       1.0, 1.0, 0.0,
+       1.0, 0.0, 1.0,
+       0.0, 1.0, 1.0};
+
+    glMatrixMode(GL_MODELVIEW);
+    
+    for (size_t i = 0; i < 6; i++) {
+      
+      glMultMatrixf(model.links[i].transform);
+      scene.drawLink(model.links[i], &linkColors[3*i]);
+
+    }
     // Swap the buffers
     SDL_GL_SwapWindow(window);
 
@@ -73,6 +103,18 @@ int main(int argc, char *argv[]) {
       if (event.type == SDL_KEYDOWN) {
         if (event.key.keysym.sym == SDLK_ESCAPE) {
           return 0;
+        }
+        if (event.key.keysym.sym == SDLK_a) {
+          translate -= 0.1;
+        }
+        if (event.key.keysym.sym == SDLK_d) {
+          translate += 0.1;
+        }
+        if (event.key.keysym.sym == SDLK_w) {
+          rotAngleDeg -= 1.5;
+        }
+        if (event.key.keysym.sym == SDLK_s) {
+          rotAngleDeg += 1.5;
         }
       }
       if (event.type == SDL_QUIT) {

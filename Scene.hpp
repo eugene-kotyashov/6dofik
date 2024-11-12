@@ -9,34 +9,50 @@
 #include <GL/glu.h>
 #endif
 
+#include <iostream>
+
 struct Scene {
+
+    static void printGLMatrix(GLfloat const *glMatrix) {
+        for (int i = 0; i < 16; i++) {
+            std::cout << " " << glMatrix[i];
+        }    
+        std::cout << std::endl;
+    }
 
     void drawAxes() {
         
     glBegin(GL_LINES);
-    GLfloat axisLength = 2.0f;
+    GLfloat axisLength = 4.0f;
     glColor3f(1.0f, 0.0f, 0.0f);
     glVertex3f(0.0f, 0.0f, 0.0f);
     glVertex3f(axisLength, 0.0f, 0.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);
+    glColor3f(0.0f, 0.0f, 1.0f);
     glVertex3f(0.0f, 0.0f, 0.0f);
     glVertex3f(0.0f, 0.0f, axisLength);
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glVertex3f(0.0f, axisLength , 0.0f);
     glEnd();
     }
-void drawLink(RobotModel::Link const &link)
+void drawLink(RobotModel::Link const &link, GLfloat const *color)
 {
-    GLfloat colorWhite[] = {1.0, 1.0, 1.0};
+    GLfloat const *colorWhite = color;
     glDisable(GL_LIGHTING);
     glDisable(GL_LIGHT0);
     glRotated(1, 1, 0, 0);
 
     // Draw local axes
+    glDisable(GL_LIGHTING);
+    drawAxes();
     
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0); // End drawing the lines for X and Y axes
+
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, color);
     // Draw the cube
     glBegin(GL_QUADS);
-    float length = link.length;
+    float length = link.len;
     // Front face
     glNormal3f(0.0, 0.0, 1.0);
     glColor3fv(colorWhite);
