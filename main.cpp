@@ -9,6 +9,8 @@
 #endif
 
 #include <thread>
+#include "robotModel.hpp"
+#include "Scene.hpp"
 #define WIDTH 800
 #define HEIGHT 600
 
@@ -39,8 +41,6 @@ int main(int argc, char *argv[]) {
 
   // Enable lighting
 
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
 
   // Set up the light position and color
   GLfloat lightPos[] = {0.0, 0.0, 1.5, 0.0};
@@ -52,72 +52,17 @@ int main(int argc, char *argv[]) {
 
   // Enable depth testing
   glEnable(GL_DEPTH_TEST);
-  GLfloat colorWhite[] = {1.0, 1.0, 1.0};
+
+  RobotModel model;
+  Scene scene;
   // Draw the cube
   while (1) {
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    glRotated(1, 1, 0, 0);
 
-    //Draw local axes
-    glBegin(GL_LINES);                   // Begin drawing the lines for X and Y axes
-    glColor3f(1.0f, 0.0f, 0.0f);         // Set color to red
-    glVertex3f(0.0f, 0.0f, 0.0f);  
-    glVertex3f(1.5f, 0.0f, 0.0f);       // Draw the line from (0, 0, 0) to (1, 0, 0)    // Draw the line from (0, 0, 0) to (0, 1, 0)
-    glEnd();                             // End drawing the lines for X and Y axes  
-    // Draw the cube
-    glBegin(GL_QUADS);
-
-    // Front face
-    glNormal3f(0.0, 0.0, 1.0);
-    glColor3fv(colorWhite);
-    glVertex3f(-0.5, -0.5, 0.5);
-    glVertex3f(0.5, -0.5, 0.5);
-    glVertex3f(0.5, 0.5, 0.5);
-    glVertex3f(-0.5, 0.5, 0.5);
-
-    // Back face
-    glNormal3f(0.0, 0.0, -1.0);
-    glColor3fv(colorWhite);
-    glVertex3f(-0.5, -0.5, -0.5);
-    glVertex3f(0.5, -0.5, -0.5);
-    glVertex3f(0.5, 0.5, -0.5);
-    glVertex3f(-0.5, 0.5, -0.5);
-
-    // Left face
-    glNormal3f(-1.0, 0.0, 0.0);
-    glColor3fv(colorWhite);
-    glVertex3f(-0.5, -0.5, -0.5);
-    glVertex3f(-0.5, -0.5, 0.5);
-    glVertex3f(-0.5, 0.5, 0.5);
-    glVertex3f(-0.5, 0.5, -0.5);
-
-    // Right face
-    glNormal3f(1.0, 0.0, 0.0);
-    glColor3fv(colorWhite);
-    glVertex3f(0.5, -0.5, -0.5);
-    glVertex3f(0.5, -0.5, 0.5);
-    glVertex3f(0.5, 0.5, 0.5);
-    glVertex3f(0.5, 0.5, -0.5);
-
-    // Top face
-    glNormal3f(0.0, 1.0, 0.0);
-    glColor3fv(colorWhite);
-    glVertex3f(-0.5, 0.5, -0.5);
-    glVertex3f(0.5, 0.5, -0.5);
-    glVertex3f(0.5, 0.5, 0.5);
-    glVertex3f(-0.5, 0.5, 0.5);
-
-    // Bottom face
-    glNormal3f(0.0, -1.0, 0.0);
-    glColor3fv(colorWhite);
-    glVertex3f(-0.5, -0.5, -0.5);
-    glVertex3f(0.5, -0.5, -0.5);
-    glVertex3f(0.5, -0.5, 0.5);
-    glVertex3f(-0.5, -0.5, 0.5);
-
-    glEnd();
+    scene.drawLink(model.links[0]);
 
     // Swap the buffers
     SDL_GL_SwapWindow(window);
