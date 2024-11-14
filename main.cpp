@@ -62,6 +62,8 @@ int main(int argc, char *argv[]) {
   for (size_t i = 0; i < 6; i++) {
       model.links[i].printTransform();
   }
+  float zeroThetas[6] = {0, 0, 0, 0, 0, 0};
+  model.getEffectorXYZ( zeroThetas);
 
   while (1) {
     
@@ -85,15 +87,18 @@ int main(int argc, char *argv[]) {
        1.0, 1.0, 0.0,
        1.0, 0.0, 1.0,
        0.0, 1.0, 1.0};
-
+    scene.drawXYPlane(10);
     glMatrixMode(GL_MODELVIEW);
     
     for (size_t i = 0; i < 6; i++) {
       
       glMultMatrixf(model.links[i].transform);
-      scene.drawLink(model.links[i], &linkColors[3*i]);
+      scene.drawLink(model.links[i].len, &linkColors[3*i]);
 
     }
+    // end effector xyz
+    glMultMatrixf(model.links[6].transform);
+    scene.drawLink(1, &linkColors[0]);
     // Swap the buffers
     SDL_GL_SwapWindow(window);
 

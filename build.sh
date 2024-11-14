@@ -5,4 +5,5 @@ fi
 mkdir build
 cd build
 cmake ..
-make
+cmake --build .
+ctest . --rerun-failed --output-on-failure

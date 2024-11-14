@@ -35,7 +35,25 @@ struct Scene {
     glVertex3f(0.0f, axisLength , 0.0f);
     glEnd();
     }
-void drawLink(RobotModel::Link const &link, GLfloat const *color)
+
+    void drawXYPlane(float size) {
+        GLboolean lightingEnabled;
+        glPushAttrib(GL_LIGHTING);
+        glDisable(GL_LIGHTING);
+        
+
+        glBegin(GL_QUADS);
+        glColor3f(0,1, 1);
+        glNormal3f(0.0, 0.0, 1.0);
+        glVertex3d  (-size, -size, 0.0);                   
+        glVertex3d  (size, -size, 0.0);                                 
+        glVertex3d  (size, size, 0.0);                                  
+        glVertex3d  (-size, size, 0.0);
+        glEnd();
+
+        glPopAttrib();
+    }
+void drawLink(float length, GLfloat const *color)
 {
     GLfloat const *colorWhite = color;
     glDisable(GL_LIGHTING);
@@ -52,21 +70,21 @@ void drawLink(RobotModel::Link const &link, GLfloat const *color)
     glMaterialfv(GL_FRONT, GL_DIFFUSE, color);
     // Draw the cube
     glBegin(GL_QUADS);
-    float length = link.len;
+    
     // Front face
     glNormal3f(0.0, 0.0, 1.0);
     glColor3fv(colorWhite);
     glVertex3f(-0.5, -0.5, 0.5);
-    glVertex3f(0.5 + length, -0.5, 0.5);
-    glVertex3f(0.5 + length, 0.5, 0.5);
+    glVertex3f(length-0.5, -0.5, 0.5);
+    glVertex3f(length-0.5, 0.5, 0.5);
     glVertex3f(-0.5, 0.5, 0.5);
 
     // Back face
     glNormal3f(0.0, 0.0, -1.0);
     glColor3fv(colorWhite);
     glVertex3f(-0.5, -0.5, -0.5);
-    glVertex3f(0.5 + length, -0.5, -0.5);
-    glVertex3f(0.5 + length, 0.5, -0.5);
+    glVertex3f(length-0.5, -0.5, -0.5);
+    glVertex3f(length-0.5, 0.5, -0.5);
     glVertex3f(-0.5, 0.5, -0.5);
 
     // Left face
@@ -80,25 +98,25 @@ void drawLink(RobotModel::Link const &link, GLfloat const *color)
     // Right face
     glNormal3f(1.0, 0.0, 0.0);
     glColor3fv(colorWhite);
-    glVertex3f(0.5 + length, -0.5, -0.5);
-    glVertex3f(0.5 + length, -0.5, 0.5);
-    glVertex3f(0.5 + length, 0.5, 0.5);
-    glVertex3f(0.5 + length, 0.5, -0.5);
+    glVertex3f(length-0.5, -0.5, -0.5);
+    glVertex3f(length-0.5, -0.5, 0.5);
+    glVertex3f(length-0.5, 0.5, 0.5);
+    glVertex3f(length-0.5, 0.5, -0.5);
 
     // Top face
     glNormal3f(0.0, 1.0, 0.0);
     glColor3fv(colorWhite);
     glVertex3f(-0.5, 0.5, -0.5);
-    glVertex3f(0.5 + length, 0.5, -0.5);
-    glVertex3f(0.5 + length, 0.5, 0.5);
+    glVertex3f(length-0.5, 0.5, -0.5);
+    glVertex3f(length-0.5, 0.5, 0.5);
     glVertex3f(-0.5, 0.5, 0.5);
 
     // Bottom face
     glNormal3f(0.0, -1.0, 0.0);
     glColor3fv(colorWhite);
     glVertex3f(-0.5, -0.5, -0.5);
-    glVertex3f(0.5 + length, -0.5, -0.5);
-    glVertex3f(0.5 + length, -0.5, 0.5);
+    glVertex3f(length-0.5, -0.5, -0.5);
+    glVertex3f(length-0.5, -0.5, 0.5);
     glVertex3f(-0.5, -0.5, 0.5);
 
     glEnd();
