@@ -59,11 +59,12 @@ int main(int argc, char *argv[]) {
   GLfloat rotAngleDeg = 0;
   GLfloat translate = 0;
 
-  for (size_t i = 0; i < 6; i++) {
+  for (size_t i = 0; i < RobotModel::LINK_COUNT+1; i++) {
       model.links[i].printTransform();
   }
-  float zeroThetas[6] = {0, 0, 0, 0, 0, 0};
-  model.getEffectorXYZ( zeroThetas);
+  float zeroThetas[RobotModel::LINK_COUNT+1] = {0, 0, 0, 0, 0, 0, 0};
+  float efXYZ[3];
+  model.getEffectorXYZ( zeroThetas, efXYZ);
 
   while (1) {
     
@@ -90,14 +91,14 @@ int main(int argc, char *argv[]) {
     scene.drawXYPlane(10);
     glMatrixMode(GL_MODELVIEW);
     
-    for (size_t i = 0; i < 6; i++) {
+    for (size_t i = 0; i < RobotModel::LINK_COUNT; i++) {
       
       glMultMatrixf(model.links[i].transform);
       scene.drawLink(model.links[i].len, &linkColors[3*i]);
 
     }
     // end effector xyz
-    glMultMatrixf(model.links[6].transform);
+    glMultMatrixf(model.links[RobotModel::LINK_COUNT].transform);
     scene.drawLink(1, &linkColors[0]);
     // Swap the buffers
     SDL_GL_SwapWindow(window);

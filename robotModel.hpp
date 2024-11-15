@@ -77,7 +77,7 @@ public:
   };
 
 
-  float getEffectorXYZ(float* thetas) {
+  void getEffectorXYZ(float const * thetas, float* resultXYZ) {
     for (int i = 0; i < LINK_COUNT+1; i++) {
       links[i].thetaRad = thetas[i];
       links[i].updateTransform();
@@ -94,16 +94,48 @@ public:
     float origin[4] = {0.0, 0.0, 0.0, 1.0};
     float xyzHomo[4] = {0.0, 0.0, 0.0, 1.0};
     Matrix4x4::mulVectorMatrix(origin, effectorTransform, xyzHomo);
+    resultXYZ[0] = xyzHomo[0];
+    resultXYZ[1] = xyzHomo[1];
+    resultXYZ[2] = xyzHomo[2];
+/*
     for (int i = 0; i < 16; i++) {
       std::cout << effectorTransform.m[i] << " ";
     }
     std::cout << std::endl;
     std::cout << "xyz: " << xyzHomo[0] 
     << " " << xyzHomo[1] << " " << xyzHomo[2] 
-    << " " << xyzHomo[3] << std::endl;
-    
+    << " " << xyzHomo[3] << std::endl;    
+*/
   }
-  
+
+  float distanceToEffectorSquared(float const * targetXYZ, float const * thetas) {
+    float result = INFINITY;
+    float efXYZ[3];
+    getEffectorXYZ(thetas, efXYZ);
+    return 
+    (efXYZ[0] - targetXYZ[0])*(efXYZ[0] - targetXYZ[0]) + 
+    (efXYZ[1] - targetXYZ[1])*(efXYZ[1] - targetXYZ[1]) + 
+    (efXYZ[2] - targetXYZ[2])*(efXYZ[2] - targetXYZ[2]);
+  }
+
+  float distanceToEffectorSqDerivative(
+    float const * targetXYZ, float const * thetas, int itheta
+  ) {
+    float result = 0.0;
+    float efXYZ[3];
+    float step = 0.0001;
+    float thetasCopy[LINK_COUNT+1];
+    for (int i = 0; i < LINK_COUNT+1; i++) {
+      thetasCopy[i] = thetas[i];
+    }
+    thetasCopy[itheta] -= step;
+    float plusValue = distanceToEffectorSquared(targetXYZ, thetasCopy);
+    thetasCopy[itheta] += 2*step;
+    float minusValue = distanceToEffectorSquared(targetXYZ, thetasCopy);
+    result = (plusValue - minusValue) / (2*step);
+    return result;
+
+  }
 
 };
 
