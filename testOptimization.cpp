@@ -3,6 +3,8 @@
 
 #include "robotModel.hpp"
 
+#define MAX_STEPS 1000
+
 void testOutputDistanceAndDerivative(int thetaIdx) {
   
   float targetXYZ[3] = {2.0, 2.0, 2.0};
@@ -27,10 +29,34 @@ void testOutputDistanceAndDerivative(int thetaIdx) {
   } else {
     std::cerr << "Unable to open file for writing" << std::endl;
   }
+  
 }
 
 int main() {
 
   testOutputDistanceAndDerivative(0);
+  RobotModel model;
+  size_t actualSteps;
+  float distvals[MAX_STEPS];
+  float targetXYZ[3] = {2.0, 2.0, 2.0};
+  float thetas[RobotModel::LINK_COUNT+1] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  model.runPerCoordinateOptimization(
+    MAX_STEPS, actualSteps, distvals, 0.001, targetXYZ, thetas
+  );
+  std::ofstream distFile("distvals.txt");
+  if (distFile.is_open()) {
+    for (int i = 0; i < actualSteps; i++) {
+      distFile << distvals[i] << std::endl;
+    }
+    distFile.close();
+  } else {
+    std::cerr << "Unable to open file for writing" << std::endl;
+  }
+  std::cout << "Steps taken: " << actualSteps << std::endl;
+  std::cout << "Thetas: ";
+  for (size_t i = 0; i < RobotModel::LINK_COUNT + 1; ++i) {
+      std::cout << thetas[i] << " ";
+  }
+  std::cout << std::endl;
   return 0;
 }

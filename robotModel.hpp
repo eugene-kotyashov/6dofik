@@ -129,13 +129,49 @@ public:
       thetasCopy[i] = thetas[i];
     }
     thetasCopy[itheta] -= step;
-    float plusValue = distanceToEffectorSquared(targetXYZ, thetasCopy);
-    thetasCopy[itheta] += 2*step;
     float minusValue = distanceToEffectorSquared(targetXYZ, thetasCopy);
+    thetasCopy[itheta] += 2*step;
+    float plusValue = distanceToEffectorSquared(targetXYZ, thetasCopy);
     result = (plusValue - minusValue) / (2*step);
     return result;
 
   }
+
+  void runSingleOptimizationStep(
+    float const * targetXYZ, size_t thetaIndex,
+      float * thetas
+  ) {
+      float a = 0.001;
+      float derivative = distanceToEffectorSqDerivative(targetXYZ, thetas, thetaIndex);
+      thetas[thetaIndex] = thetas[thetaIndex] - a*derivative;
+  }
+
+  void runPerCoordinateOptimization(
+    size_t maxSteps,
+    size_t &actualSteps,
+    float *distVals,
+    float distanceEps,
+    float const * targetXYZ,
+    float * initialThetas
+    ) 
+    {
+      actualSteps = 0;
+      float distance = distanceToEffectorSquared(targetXYZ, initialThetas);
+      for (size_t stepCount = 0; stepCount < maxSteps; stepCount++) {
+        ++actualSteps;
+        for (int thetaIndex = 0; thetaIndex < LINK_COUNT; thetaIndex++) {
+          runSingleOptimizationStep(targetXYZ, thetaIndex, initialThetas);
+          distance = distanceToEffectorSquared(targetXYZ, initialThetas);
+          if (distance < distanceEps) {
+            distVals[stepCount] = distance;
+            return;
+          }
+          
+        }
+        distVals[stepCount] = distance;
+
+        }
+    }
 
 };
 
