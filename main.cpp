@@ -25,10 +25,41 @@ void doRobotOptimization(
   float thetas[RobotModel::LINK_COUNT+1] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   robotModel.runPerCoordinateOptimization(
     MAX_STEPS, actualSteps, distvals, 0.001, targetXYZ, thetas,
-    [&]() {
+    [&]( size_t curStep, float distance ) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::cout <<curStep << " " << distance << " thetas: ";
+      for (size_t i = 0; i < RobotModel::LINK_COUNT + 1; ++i) {
+          std::cout << thetas[i] << " ";
+      }
+      std::cout << std::endl;
     }
   );
+}
+
+void axisAngleRotationMatrix(float angle, float x, float y, float z, float matrix[16]) {
+    float c = cos(angle);
+    float s = sin(angle);
+    float t = 1 - c;
+
+    matrix[0] = t * x * x + c;
+    matrix[1] = t * x * y - z * s;
+    matrix[2] = t * x * z + y * s;
+    matrix[3] = 0;
+
+    matrix[4] = t * x * y + z * s;
+    matrix[5] = t * y * y + c;
+    matrix[6] = t * y * z - x * s;
+    matrix[7] = 0;
+
+    matrix[8] = t * x * z - y * s;
+    matrix[9] = t * y * z + x * s;
+    matrix[10] = t * z * z + c;
+    matrix[11] = 0;
+
+    matrix[12] = 0;
+    matrix[13] = 0;
+    matrix[14] = 0;
+    matrix[15] = 1;
 }
 
 int main(int argc, char *argv[]) {
@@ -88,6 +119,7 @@ int main(int argc, char *argv[]) {
        1.0, 0.0, 1.0,
        0.0, 1.0, 1.0};
   GLfloat magenta[] = {1.0, 0.0, 1.0};
+  float cameraDistance = 20;
   while (1) {
     
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -98,11 +130,20 @@ int main(int argc, char *argv[]) {
     GLfloat cameraMatrix[16];
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+/*
     glTranslated(-10, 0, -30);
     glGetFloatv(GL_MODELVIEW_MATRIX, cameraMatrix);
     glLoadMatrixf(cameraMatrix);
     glTranslatef(0,  translate, 0);
     glRotatef(rotAngleDeg, 0, 1, 0);
+*/  
+    gluLookAt(
+      cameraDistance*sin(rotAngleDeg*M_PI/180),
+       0,
+        cameraDistance*cos(rotAngleDeg*M_PI/180),
+      0, 0, 0,
+      0, 1, 0
+    );
     //save camera matrix
     glGetFloatv(GL_MODELVIEW_MATRIX, cameraMatrix);
     
@@ -112,15 +153,13 @@ int main(int argc, char *argv[]) {
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(cameraMatrix);
     scene.drawAxes();
+    // scene.drawXYPlane(10);
     
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(cameraMatrix);
     glTranslatef(targetXYZ[0], targetXYZ[1], targetXYZ[2]);
     scene.drawLink(1.0, magenta);
     glEnable(GL_LIGHTING);
-    
-    // scene.drawXYPlane(10);
-
     
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(cameraMatrix);
@@ -143,16 +182,16 @@ int main(int argc, char *argv[]) {
         if (event.key.keysym.sym == SDLK_ESCAPE) {
           return 0;
         }
-        if (event.key.keysym.sym == SDLK_a) {
-          translate -= 0.1;
-        }
-        if (event.key.keysym.sym == SDLK_d) {
-          translate += 0.1;
-        }
         if (event.key.keysym.sym == SDLK_w) {
-          rotAngleDeg -= 1.5;
+          cameraDistance -= 1;
         }
         if (event.key.keysym.sym == SDLK_s) {
+          cameraDistance += 1;
+        }
+        if (event.key.keysym.sym == SDLK_a) {
+          rotAngleDeg -= 1.5;
+        }
+        if (event.key.keysym.sym == SDLK_d) {
           rotAngleDeg += 1.5;
         }
       }

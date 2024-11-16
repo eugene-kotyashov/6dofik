@@ -41,8 +41,8 @@ int main() {
   float targetXYZ[3] = {2.0, 2.0, 2.0};
   float thetas[RobotModel::LINK_COUNT+1] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   model.runPerCoordinateOptimization(
-    MAX_STEPS, actualSteps, distvals, 0.001, targetXYZ, thetas
-  );
+    MAX_STEPS, actualSteps, distvals, 0.001, targetXYZ, thetas,
+  nullptr);
   std::ofstream distFile("distvals.txt");
   if (distFile.is_open()) {
     for (int i = 0; i < actualSteps; i++) {

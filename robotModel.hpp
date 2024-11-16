@@ -154,7 +154,7 @@ public:
     float distanceEps,
     float const * targetXYZ,
     float * initialThetas,
-    std::function<void()> onStep = [](void) {}
+    std::function<void(size_t, float)> onStep
     ) 
     {
       actualSteps = 0;
@@ -164,7 +164,7 @@ public:
         for (int thetaIndex = 0; thetaIndex < LINK_COUNT; thetaIndex++) {
           runSingleOptimizationStep(targetXYZ, thetaIndex, initialThetas);
           distance = distanceToEffectorSquared(targetXYZ, initialThetas);
-          onStep();
+          onStep(stepCount, distance);
           if (distance < distanceEps) {
             distVals[stepCount] = distance;
             return;
