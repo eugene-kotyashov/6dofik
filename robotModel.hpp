@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <functional>
 #include "GeomUtil.hpp"
 
 struct RobotModel {
@@ -152,7 +153,8 @@ public:
     float *distVals,
     float distanceEps,
     float const * targetXYZ,
-    float * initialThetas
+    float * initialThetas,
+    std::function<void()> onStep = [](void) {}
     ) 
     {
       actualSteps = 0;
@@ -162,6 +164,7 @@ public:
         for (int thetaIndex = 0; thetaIndex < LINK_COUNT; thetaIndex++) {
           runSingleOptimizationStep(targetXYZ, thetaIndex, initialThetas);
           distance = distanceToEffectorSquared(targetXYZ, initialThetas);
+          onStep();
           if (distance < distanceEps) {
             distVals[stepCount] = distance;
             return;

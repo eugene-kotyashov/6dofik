@@ -14,13 +14,31 @@
 #define WIDTH 800
 #define HEIGHT 600
 
+#define MAX_STEPS 1000
+
+void doRobotOptimization(
+  RobotModel& robotModel, float targetX, float targetY, float targetZ ) {
+  
+  size_t actualSteps;
+  float distvals[MAX_STEPS];
+  float targetXYZ[3] = {targetX, targetY, targetZ};
+  float thetas[RobotModel::LINK_COUNT+1] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  robotModel.runPerCoordinateOptimization(
+    MAX_STEPS, actualSteps, distvals, 0.001, targetXYZ, thetas,
+    [&]() {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  );
+}
+
 int main(int argc, char *argv[]) {
   // Initialize SDL
   SDL_Init(SDL_INIT_VIDEO);
 
   // Create a window
   SDL_Window *window =
-      SDL_CreateWindow("Cube", 100, 100, WIDTH, HEIGHT, SDL_WINDOW_OPENGL);
+      SDL_CreateWindow(
+        "Cube", 100, 100, WIDTH, HEIGHT, SDL_WINDOW_OPENGL);
 
   // Create an OpenGL context
   SDL_GLContext context = SDL_GL_CreateContext(window);
@@ -33,15 +51,6 @@ int main(int argc, char *argv[]) {
   glLoadIdentity();
   gluPerspective(45, (float)WIDTH / (float)HEIGHT, 0.1, 100);
 
-  // Set up the OpenGL modelview matrix
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glTranslated(-10, 0, -30);
-  
-
-  GLfloat cameraMatrix[16];
-  glGetFloatv(GL_MODELVIEW_MATRIX, cameraMatrix);
-  Scene::printGLMatrix(cameraMatrix);
 
   // Set up the light position and color
   GLfloat lightPos[] = {0.0, 0.0, 1.5, 0.0};
@@ -65,32 +74,56 @@ int main(int argc, char *argv[]) {
   float zeroThetas[RobotModel::LINK_COUNT+1] = {0, 0, 0, 0, 0, 0, 0};
   float efXYZ[3];
   model.getEffectorXYZ( zeroThetas, efXYZ);
+  float targetXYZ[3] = {2.0, 4.0, -4.0};
+  std::thread optimizationThread(
+    doRobotOptimization,
+     std::ref(model),
+     targetXYZ[0], targetXYZ[1], targetXYZ[2]);
 
-  while (1) {
-    
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    // Clear the screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(cameraMatrix);
-    glTranslatef(0,  translate, 0);
-    glRotatef(rotAngleDeg, 0, 1, 0);
-    glDisable(GL_LIGHTING);
-    scene.drawAxes();
-    glEnable(GL_LIGHTING);
-    
-
-    GLfloat linkColors[] = {
+  GLfloat linkColors[] = {
        1.0, 0.0, 0.0,
        0.0, 1.0, 0.0,
        0.0, 0.0, 1.0,
        1.0, 1.0, 0.0,
        1.0, 0.0, 1.0,
        0.0, 1.0, 1.0};
-    scene.drawXYPlane(10);
-    glMatrixMode(GL_MODELVIEW);
+  GLfloat magenta[] = {1.0, 0.0, 1.0};
+  while (1) {
     
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  //setup scene camera position
+    GLfloat cameraMatrix[16];
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glTranslated(-10, 0, -30);
+    glGetFloatv(GL_MODELVIEW_MATRIX, cameraMatrix);
+    glLoadMatrixf(cameraMatrix);
+    glTranslatef(0,  translate, 0);
+    glRotatef(rotAngleDeg, 0, 1, 0);
+    //save camera matrix
+    glGetFloatv(GL_MODELVIEW_MATRIX, cameraMatrix);
+    
+
+    glDisable(GL_LIGHTING);
+    // draw world axes
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(cameraMatrix);
+    scene.drawAxes();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(cameraMatrix);
+    glTranslatef(targetXYZ[0], targetXYZ[1], targetXYZ[2]);
+    scene.drawLink(1.0, magenta);
+    glEnable(GL_LIGHTING);
+    
+    // scene.drawXYPlane(10);
+
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(cameraMatrix);
     for (size_t i = 0; i < RobotModel::LINK_COUNT; i++) {
       
       glMultMatrixf(model.links[i].transform);
