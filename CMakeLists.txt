@@ -16,6 +16,7 @@ target_link_libraries(iksimulation Eigen3::Eigen SDL2::SDL2 OpenGL::GL)
 # testing binary
 add_executable(matrix_test testMatrix.cpp)
 add_executable(matrix_test2 testMatrix2.cpp)
+add_executable(testOptimization testOptimization.cpp)
 
 # enable testing functionality
 enable_testing()
