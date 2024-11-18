@@ -23,11 +23,12 @@ void doRobotOptimization(
   float distvals[MAX_STEPS];
   float targetXYZ[3] = {targetX, targetY, targetZ};
   float thetas[RobotModel::LINK_COUNT+1] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  robotModel.runPerCoordinateOptimization(
-    MAX_STEPS, actualSteps, distvals, 0.001, targetXYZ, thetas,
-    [&]( size_t curStep, float distance ) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      std::cout <<curStep << " " << distance << " thetas: ";
+  robotModel.runGradDescent(
+    MAX_STEPS, actualSteps, distvals, 0.01, targetXYZ, thetas,
+    [&]( size_t curStep, float distance, float gamma ) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+      std::cout <<curStep << " " << distance << " "
+       << gamma << " thetas: ";
       for (size_t i = 0; i < RobotModel::LINK_COUNT + 1; ++i) {
           std::cout << thetas[i] << " ";
       }
