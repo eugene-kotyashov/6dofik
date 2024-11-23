@@ -6,7 +6,7 @@
 #include <functional>
 #include "GeomUtil.hpp"
 
-
+#define MAX_ABS_THETA 1.9*M_PI
 
     #define INIT_PARAMS float r = 3.0;\
     float d = 1.0;\
@@ -221,15 +221,24 @@ public:
   /* https://math.stackexchange.com/questions/373868/optimal-step-size-in-gradient-descent
   selction of optimal alpha
   𝐹(𝑎+𝛾𝑣)≤𝐹(𝑎)−𝑐𝛾‖∇𝐹(𝑎)‖22*/
-  void runSingleGradientDescentStep(
+  float runSingleGradientDescentStep(
     float const * targetXYZ, float * thetas, float& gamma
   ) {
     float grad[LINK_COUNT] = {0.0};
     gradientOfDistanceSquaredAnalytic(targetXYZ, thetas, grad);
+    /*
+    std::cout << "grad: ";
+    for (size_t i = 0; i < LINK_COUNT; i++) {
+      std::cout << grad[i] << " ";
+    }
+    
+    std::cout << std::endl;
+    */
     float gradNorm2 = 0.0;
     for (size_t thetaIndex = 0; thetaIndex < LINK_COUNT; thetaIndex++) {
       gradNorm2 += grad[thetaIndex]*grad[thetaIndex];
     }
+    std::cout << "gradNorm2: " << gradNorm2 << std::endl;
     gradNorm2 = sqrt(gradNorm2);
     float c = 0.5; // value to check Armijo-Goldstein condition
 
@@ -241,17 +250,31 @@ public:
     size_t maxIterations = 100;
     while (iterationCount++ < maxIterations) {
       float startDist = distanceToEffectorSquared(targetXYZ, thetas);
+      bool newThetaTooBig = false;
       for (size_t thetaIndex = 0; thetaIndex < LINK_COUNT; thetaIndex++) {
-        thetas[thetaIndex] = thetas[thetaIndex] - gamma*grad[thetaIndex];
+        float updatedTheta = thetas[thetaIndex] - gamma*grad[thetaIndex];
+        // if new theta is too big reset theta and reduce gamma
+        if (abs(updatedTheta > MAX_ABS_THETA)) {
+  
+          for (size_t thetaIndex = 0; thetaIndex < LINK_COUNT; thetaIndex++) {
+           thetas[thetaIndex] = savedThetas[thetaIndex];
+          }
+          gamma *= 0.5;
+          newThetaTooBig = true;
+          break;
+        }
+        thetas[thetaIndex] = updatedTheta;
       }
+      if (newThetaTooBig) continue;
       float updatedDist = distanceToEffectorSquared(targetXYZ, thetas);
-      if (updatedDist < (startDist - c*gamma*gradNorm2)) return;
+      if (updatedDist < (startDist - c*gamma*gradNorm2)) break;
       for (size_t thetaIndex = 0; thetaIndex < LINK_COUNT; thetaIndex++) {
         thetas[thetaIndex] = savedThetas[thetaIndex];
       }
       gamma *= 0.5;
     }
-
+    // std::cout << "gamma iteration count: " << iterationCount << std::endl;
+    return gradNorm2;
   }
 
   void runSingleOptimizationStep(
@@ -293,7 +316,7 @@ public:
         }
     }
 
-    void runGradDescent(
+    bool runGradDescent(
     size_t maxSteps,
     size_t &actualSteps,
     float *distVals,
@@ -304,23 +327,26 @@ public:
     )
 {
   actualSteps = 0;
-  float distance = distanceToEffectorSquared(targetXYZ, initialThetas);
+  
+  float distance = INFINITY;
   for (size_t stepCount = 0; stepCount < maxSteps; stepCount++) {
     ++actualSteps;
     float initGamma = 0.1;
+    float oldDistance = distance;
     distance = distanceToEffectorSquared(
       targetXYZ, initialThetas);
     onStep(stepCount, distance, initGamma);
     if (distance < distanceEps) {
       distVals[stepCount] = distance;
-      return;
+      return true;
+    } else if (abs(distance - oldDistance) < 0.1*distanceEps) {
+      return false;
     }
     distVals[stepCount] = distance;
-    
-    runSingleGradientDescentStep(
+    float newGradNorm = runSingleGradientDescentStep(
       targetXYZ, initialThetas, initGamma);
-
   }
+   return true;
 
 }
 

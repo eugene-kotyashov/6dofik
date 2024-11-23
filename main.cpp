@@ -15,6 +15,7 @@
 #define HEIGHT 600
 
 #define MAX_STEPS 1000
+#define MAX_RANDOM_TRIES 10
 
 void doRobotOptimization(
   RobotModel& robotModel, float targetX, float targetY, float targetZ ) {
@@ -22,8 +23,11 @@ void doRobotOptimization(
   size_t actualSteps;
   float distvals[MAX_STEPS];
   float targetXYZ[3] = {targetX, targetY, targetZ};
+  float absThetaRandomMax = 0.1;
+  srand(time(0));
   float thetas[RobotModel::LINK_COUNT+1] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  robotModel.runGradDescent(
+  int maxTries = MAX_RANDOM_TRIES;
+  while ( !robotModel.runGradDescent(
     MAX_STEPS, actualSteps, distvals, 0.01, targetXYZ, thetas,
     [&]( size_t curStep, float distance, float gamma ) {
       std::this_thread::sleep_for(std::chrono::milliseconds(2000));
@@ -34,7 +38,23 @@ void doRobotOptimization(
       }
       std::cout << std::endl;
     }
-  );
+  ) ) {
+    maxTries--;
+    if (maxTries == 0) {
+      break;
+    }
+    std::cout << "resetting initial thetas" << std::endl;
+    // reset thetas with new random values
+    for (size_t i = 0; i < RobotModel::LINK_COUNT + 1; ++i) {
+      thetas[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) 
+        * 2 * absThetaRandomMax - absThetaRandomMax;
+    }
+    std::cout << "new initial thetas: ";  
+    for (size_t i = 0; i < RobotModel::LINK_COUNT + 1; ++i) {
+      std::cout << thetas[i] << " ";      
+    }    
+    std::cout << std::endl;
+  }
 }
 
 void axisAngleRotationMatrix(float angle, float x, float y, float z, float matrix[16]) {
@@ -106,7 +126,7 @@ int main(int argc, char *argv[]) {
   float zeroThetas[RobotModel::LINK_COUNT+1] = {0, 0, 0, 0, 0, 0, 0};
   float efXYZ[3];
   model.getEffectorXYZ( zeroThetas, efXYZ);
-  float targetXYZ[3] = {2.0, 4.0, -4.0};
+  float targetXYZ[3] = {3.0, -2.0, -2.0};// {2.0, 4.0, -4.0};
   std::thread optimizationThread(
     doRobotOptimization,
      std::ref(model),
